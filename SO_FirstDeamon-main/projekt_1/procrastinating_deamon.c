@@ -9,6 +9,13 @@
 volatile sig_atomic_t signal_flag = 0; // catch signal
 volatile sig_atomic_t malicious_mode = 0; // evil mode flag
 
+// Statistics and fatigue
+int tasks_completed = 0; // task counter
+int tasks_refused = 0; // refused tasks
+int files_deleted = 0; // maliciously deleted
+long bytes_processed = 0; // total bytes
+int is_tired = 0; // fatigue flag
+
 // Simple hash function
 unsigned int hash_byte(unsigned char byte, unsigned int seed) {
     return ((byte + seed) * 2654435761U) % 256; // hash with seed
@@ -39,6 +46,25 @@ int is_break_time() {
     return 0; // go to work
 }
 
+int get_weekday() {
+    time_t t = time(NULL); // get current time
+    struct tm *tm = localtime(&t); // convert to struct
+    return tm->tm_wday; // 0=Sunday, 1=Monday, ..., 6=Saturday
+}
+
+void save_stats() {
+    FILE *stats = fopen("/tmp/daemon_stats.txt", "w"); // save stats
+    if (stats != NULL) {
+        fprintf(stats, "=== Statystyki Leniwego Demona ===\n");
+        fprintf(stats, "Zadan wykonanych: %d\n", tasks_completed);
+        fprintf(stats, "Zadan odrzuconych: %d\n", tasks_refused);
+        fprintf(stats, "Plikow usunietych (zlosliwie): %d\n", files_deleted);
+        fprintf(stats, "Bajtow przetworzonych: %ld\n", bytes_processed);
+        fprintf(stats, "Stan: %s\n", is_tired ? "ZMECZONY" : "Wypoczety");
+        fclose(stats);
+    }
+}
+
 void make_daemon() {
     pid_t pid = fork(); // create child
     if (pid < 0) exit(1); // fork failed
@@ -56,8 +82,35 @@ long get_size(char *path) {
 }
 
 void process_file(int mode, int delay, char *path, char *dest) {
+    int weekday = get_weekday();
+
+    // Weekend check
+    if (weekday == 0 || weekday == 6) {
+        log_msg("Weekend! Nie pracuje w weekendy, wracaj w poniedzialek!");
+        tasks_refused++;
+        save_stats();
+        return;
+    }
+
+    // Fatigue check
+    if (is_tired) {
+        log_msg("Jestem zmeczony... potrzebuje 5 minut przerwy...");
+        sleep(300); // 5 minutes
+        is_tired = 0; // reset after rest
+        log_msg("Ok, juz troche odpoczalem.");
+    }
+
+    // Monday blues
+    if (weekday == 1) {
+        log_msg("Ugh, poniedzialek... najgorszy dzien tygodnia...");
+        sleep(5); // extra Monday delay
+        log_msg("No dobra, moge sie za to zabrac...");
+    }
+
     if (is_break_time()) {
         log_msg("Eee nie, teraz mam przerwe kawowa (16:00-17:00)!");
+        tasks_refused++;
+        save_stats();
         return; // ignore task completely
     }
 
@@ -76,6 +129,20 @@ void process_file(int mode, int delay, char *path, char *dest) {
         log_msg("Co to jest? Nieeee za dlugie, ide spac");
         sleep(120); // sleep 2 minutes
         log_msg("DOBRA DOBRA usiade do tego, ugh...");
+    }
+
+    // Random events!
+    int random_event = rand() % 100;
+    if (random_event < 5) { // 5% chance
+        log_msg("Ups, myszka mi uciekla! Gdzie ona jest?");
+        sleep(30); // 30 seconds delay
+        log_msg("Znalazlem! Dobra, wracam do pracy...");
+    } else if (random_event < 15) { // 10% chance (5-15)
+        log_msg("Hmm, musze sprawdzic co nowego na reddicie...");
+        sleep(60); // 20 seconds delay
+        log_msg("Czy czegos zapomnialem?");
+        log_msg("...");
+        log_msg("O szlag! Moja praca! No przeciez!");
     }
 
     char final_dest[256];
@@ -150,10 +217,25 @@ void process_file(int mode, int delay, char *path, char *dest) {
 
     fclose(in); // close source
     fclose(out); // close dest
+
+    // Update statistics
+    long file_size = get_size(path);
+    bytes_processed += file_size;
+    tasks_completed++;
+
+    // Check fatigue after 10 tasks
+    if (tasks_completed % 10 == 0) {
+        is_tired = 1; // set fatigue flag
+        log_msg("Uff, 10 zadan juz zrobilem. Jestem zmeczony...");
+    }
+
     log_msg("Tak tak, zrobilem to.");
+    save_stats(); // save after each task
 
     if (mode == 1 && (rand() % 2 == 1)) { // random 50% chance
         remove(path); // delete original
+        files_deleted++; // count deletion
+        save_stats(); // update stats
         log_msg("Ale fajny plik. Pozwol ze go usune :>.");
     }
 

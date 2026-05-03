@@ -37,7 +37,7 @@ Przykład – jak zlecić szyfrowanie z poziomu terminala:
 Najpierw stwórz testowy plik:
 
 Bash
-echo "To jest moj bardzo wazny tajny tekst" > /tmp/test.txt
+echo "To jest mój bardzo ważny tajny tekst" > /tmp/test.txt
 Następnie wyślij zadanie do demona (szyfrowanie bez opóźnienia):
 
 Bash
@@ -51,11 +51,37 @@ Kaprys (losowe usuwanie): Przy każdym zleceniu szyfrowania (tryb 1) demon rzuca
 
 Złośliwe haszowanie (tekstowe): Zamiast zapisywać hashe jako binarne bajty, demon zamieni je na tekstowe liczby (np. "245 123 78 201"). Zobaczysz, że plik wyjściowy będzie wielokrotnie większy od oryginalnego - każdy bajt zajmuje teraz około 4 znaki! Ma to miejsce losowo (50% szans) lub gdy wyślesz sygnał SIGUSR2.
 
-Przerwa kawowa dla plików >2000 bajtów: Jeśli plik jest większy niż 2000 bajtów, demon stwierdzi że nie chce mu sie tego robić i zaśnie na 2 minuty przed rozpoczęciem pracy.
+Przerwa kawowa dla plików >2000 bajtów: Jeśli plik jest większy niż 2000 bajtów, demon stwierdzi że nie chce mu się tego robić i zaśnie na 2 minuty przed rozpoczęciem pracy.
 
 Harmonogram lenistwa (16:00 - 17:00): Spróbuj zlecić mu zadanie między godziną 16:00 a 16:59 (czasu systemowego). Demon odrzuci zadanie całkowicie, narzekając w logach na przerwę w pracy.
 
-6. Przechwytywanie sygnałów
+Weekendy (sobota i niedziela): Demon nie pracuje w weekendy! Jeśli spróbujesz zlecić mu zadanie w sobotę (dzień 6) lub niedzielę (dzień 0), odrzuci je z komunikatem "Weekend! Nie pracuje w weekendy, wracaj w poniedziałek!"
+
+Monday Blues (poniedziałki): W poniedziałki demon jest szczególnie niechętny do pracy. Doda dodatkowe 5 sekund opóźnienia z narzekaniem "Ugh, poniedziałek... najgorszy dzień tygodnia..."
+
+System zmęczenia: Po wykonaniu 10 zadań demon się męczy i potrzebuje 5-minutowej przerwy. Zobaczysz w logach: "Uff, 10 zadań już zrobiłem. Jestem zmęczony..." Po przerwie wraca do pracy.
+
+Losowe zdarzenia podczas pracy:
+- 5% szansy: "Ups, myszka mi uciekła! Gdzie ona jest?" - demon odwleka pracę o 30 sekund szukając myszki.
+- 10% szansy: "Hmm, muszę sprawdzić co nowego na reddicie..." - demon wisi na internecie przez 60 sekund zanim przypomni sobie o pracy.
+
+6. Statystyki demona
+Demon prowadzi szczegółowe statystyki swojej pracy w pliku /tmp/daemon_stats.txt. Możesz je podejrzeć w dowolnym momencie:
+
+Bash
+cat /tmp/daemon_stats.txt
+
+# Lub podgląd na żywo (aktualizuje się po każdym zadaniu)
+watch -n 1 cat /tmp/daemon_stats.txt
+
+Statystyki zawierają:
+- Zadań wykonanych: Licznik wszystkich ukończonych zadań
+- Zadań odrzuconych: Ile razy odmówił pracy (weekend, 16:00-17:00)
+- Plików usuniętych (złośliwie): Licznik złośliwie usuniętych plików źródłowych
+- Bajtów przetworzonych: Suma bajtów wszystkich przetworzonych plików
+- Stan: Wypoczęty / ZMĘCZONY (czy potrzebuje przerwy)
+
+7. Przechwytywanie sygnałów
 Możesz wysłać demonowi specjalne sygnały:
 
 SIGUSR1 - Zmiana ścieżki: Zignoruje ścieżkę zapisu z linii 4 i zapisze plik w z góry narzuconym miejscu (/tmp/signal_secret_file.txt).
@@ -78,7 +104,7 @@ kill -SIGUSR1 12345
 
 # Lub wyślij sygnał SIGUSR2 dla złośliwego haszowania
 kill -SIGUSR2 12345
-7. Zakończenie pracy
+8. Zakończenie pracy
 Aby wyłączyć demona w cywilizowany sposób, użyj trybu 3. Reszta parametrów nie ma wtedy znaczenia:
 
 Bash
