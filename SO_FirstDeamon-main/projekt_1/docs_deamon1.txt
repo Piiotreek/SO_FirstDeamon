@@ -1,0 +1,85 @@
+📖 Instrukcja obsługi Leniwego Demona (WSL / Linux)
+Ten program to demon działający w tle. Nie posiada interfejsu graficznego ani nie wyświetla komunikatów w terminalu. Komunikujesz się z nim wyłącznie poprzez tworzenie pliku z zadaniami oraz wysyłanie sygnałów systemowych.
+
+Ważne dla użytkowników WSL: Pamiętaj, że demon operuje na ścieżkach linuksowych. Jeśli chcesz zaszyfrować plik ze swojego pulpitu w Windowsie, ścieżka będzie wyglądać mniej więcej tak: /mnt/c/Users/TwojaNazwa/Desktop/plik.txt. Dla wygody polecam jednak testować go w linuksowym katalogu /tmp/.
+
+1. Skompiluj projekt
+Otwórz terminal WSL (np. Ubuntu), przejdź do folderu z plikiem daemon.c i skompiluj go komendą:
+
+Bash
+gcc daemon.c -o leniwy_demon
+(Jeśli terminal wyrzuci błąd o braku gcc, zainstaluj kompilator wpisując: sudo apt update && sudo apt install build-essential)
+
+2. Uruchom demona
+Wpisz w terminalu:
+
+Bash
+./leniwy_demon
+Program natychmiast zniknie i odłączy się od terminala. Od teraz działa w tle.
+
+3. Podglądaj jego pracę (Logi)
+Ponieważ demon jest cichy, wszystkie swoje żale i raporty z pracy zapisuje w pliku z logami. Najlepiej otworzyć sobie drugą zakładkę w terminalu i włączyć podgląd logów na żywo:
+
+Bash
+tail -f /tmp/daemon_log.txt
+4. Zlecanie zadań (Plik /tmp/task.txt)
+Aby zmusić demona do pracy, musisz stworzyć plik /tmp/task.txt, który zawsze musi składać się z dokładnie 4 linijek:
+
+Linia 1 (Tryb): 1 = Szyfruj (Haszowanie), 2 = Odszyfruj (Haszowanie), 3 = Zakończ pracę demona.
+
+Linia 2 (Opóźnienie): Czas oczekiwania w sekundach (np. 5), wpisz 0 dla braku opóźnienia.
+
+Linia 3 (Plik wejściowy): Pełna ścieżka do pliku, który chcesz przetworzyć.
+
+Linia 4 (Plik wyjściowy): Pełna ścieżka docelowa.
+
+Przykład – jak zlecić szyfrowanie z poziomu terminala:
+Najpierw stwórz testowy plik:
+
+Bash
+echo "To jest moj bardzo wazny tajny tekst" > /tmp/test.txt
+Następnie wyślij zadanie do demona (szyfrowanie bez opóźnienia):
+
+Bash
+echo -e "1\n0\n/tmp/test.txt\n/tmp/wynik.crypted" > /tmp/task.txt
+Demon w ciągu max 2 sekund znajdzie ten plik, zje go (usunie) i wykona zadanie.
+
+5. Jak wywołać funkcje specjalne?
+Prokrastynacja: Zleć mu zaszyfrowanie pliku większego niż 500 bajtów. Demon stwierdzi, że plik jest za duży, wpisze to do logów i pójdzie spać na 10 sekund przed rozpoczęciem pracy.
+
+Kaprys (losowe usuwanie): Przy każdym zleceniu szyfrowania (tryb 1) demon rzuca monetą. Ma 50% szans, że złośliwie usunie Twój oryginalny plik wejściowy bez pytania o zgodę. Zawsze sprawdzaj logi!
+
+Złośliwe haszowanie (tekstowe): Zamiast zapisywać hashe jako binarne bajty, demon zamieni je na tekstowe liczby (np. "245 123 78 201"). Zobaczysz, że plik wyjściowy będzie wielokrotnie większy od oryginalnego - każdy bajt zajmuje teraz około 4 znaki! Ma to miejsce losowo (50% szans) lub gdy wyślesz sygnał SIGUSR2.
+
+Przerwa kawowa dla plików >2000 bajtów: Jeśli plik jest większy niż 2000 bajtów, demon stwierdzi że nie chce mu sie tego robić i zaśnie na 2 minuty przed rozpoczęciem pracy.
+
+Harmonogram lenistwa (16:00 - 17:00): Spróbuj zlecić mu zadanie między godziną 16:00 a 16:59 (czasu systemowego). Demon odrzuci zadanie całkowicie, narzekając w logach na przerwę w pracy.
+
+6. Przechwytywanie sygnałów
+Możesz wysłać demonowi specjalne sygnały:
+
+SIGUSR1 - Zmiana ścieżki: Zignoruje ścieżkę zapisu z linii 4 i zapisze plik w z góry narzuconym miejscu (/tmp/signal_secret_file.txt).
+
+SIGUSR2 - Wymuszenie złośliwości: Demon będzie na 100% zapisywał hashe jako tekst (plik będzie wielokrotnie większy).
+
+Przykład z sygnałem SIGUSR1:
+Najpierw zleć mu zadanie z dużym opóźnieniem (np. 15 sekund), aby mieć czas na reakcję:
+
+Bash
+echo -e "1\n15\n/tmp/test.txt\n/tmp/zwykly_wynik.crypted" > /tmp/task.txt
+Następnie szybko znajdź PID (numer) procesu i wyślij sygnał:
+
+Bash
+# Znajdź PID
+pidof leniwy_demon 
+
+# Wyślij sygnał SIGUSR1 (zamień 12345 na swój PID)
+kill -SIGUSR1 12345
+
+# Lub wyślij sygnał SIGUSR2 dla złośliwego haszowania
+kill -SIGUSR2 12345
+7. Zakończenie pracy
+Aby wyłączyć demona w cywilizowany sposób, użyj trybu 3. Reszta parametrów nie ma wtedy znaczenia:
+
+Bash
+echo -e "3\n0\nnone\nnone" > /tmp/task.txt
