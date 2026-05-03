@@ -139,10 +139,15 @@ void process_file(int mode, int delay, char *path, char *dest) {
         log_msg("Znalazlem! Dobra, wracam do pracy...");
     } else if (random_event < 15) { // 10% chance (5-15)
         log_msg("Hmm, musze sprawdzic co nowego na reddicie...");
-        sleep(60); // 20 seconds delay
+        sleep(60); // 60 seconds delay
         log_msg("Czy czegos zapomnialem?");
         log_msg("...");
         log_msg("O szlag! Moja praca! No przeciez!");
+    } else if (random_event < 25) { // 10% chance (15-25)
+        log_msg("Nie! Nie chce mi sie, nie zrobie tego!");
+        tasks_refused++;
+        save_stats();
+        return; // refuse completely
     }
 
     char final_dest[256];

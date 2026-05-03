@@ -64,6 +64,7 @@ System zmęczenia: Po wykonaniu 10 zadań demon się męczy i potrzebuje 5-minut
 Losowe zdarzenia podczas pracy:
 - 5% szansy: "Ups, myszka mi uciekła! Gdzie ona jest?" - demon odwleka pracę o 30 sekund szukając myszki.
 - 10% szansy: "Hmm, muszę sprawdzić co nowego na reddicie..." - demon wisi na internecie przez 60 sekund zanim przypomni sobie o pracy.
+- 10% szansy: "Nie! Nie zrobie tego!" - demon po prostu kapryśnie odmawia wykonania zadania bez podawania powodu. Zadanie jest odrzucone i licznik odmów wzrasta.
 
 6. Statystyki demona
 Demon prowadzi szczegółowe statystyki swojej pracy w pliku /tmp/daemon_stats.txt. Możesz je podejrzeć w dowolnym momencie:
@@ -76,7 +77,7 @@ watch -n 1 cat /tmp/daemon_stats.txt
 
 Statystyki zawierają:
 - Zadań wykonanych: Licznik wszystkich ukończonych zadań
-- Zadań odrzuconych: Ile razy odmówił pracy (weekend, 16:00-17:00)
+- Zadań odrzuconych: Ile razy odmówił pracy (weekend, 16:00-17:00, kapryśna odmowa "Nie! Nie zrobie tego!")
 - Plików usuniętych (złośliwie): Licznik złośliwie usuniętych plików źródłowych
 - Bajtów przetworzonych: Suma bajtów wszystkich przetworzonych plików
 - Stan: Wypoczęty / ZMĘCZONY (czy potrzebuje przerwy)
