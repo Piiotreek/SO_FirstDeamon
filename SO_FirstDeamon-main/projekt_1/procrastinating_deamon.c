@@ -269,7 +269,7 @@ int main() {
                         log_msg("Myslisz, ze tak latwo mnie stad wyrzucisz? Niedoczekanie, jeszcze tu posiedze!");
                         tasks_refused++;
                         save_stats();
-                        return;
+                        continue;
                     } else {
                         log_msg("Koniec pracy na dzisiaj? W koncu! Ide do domu sie wyspac.");
                         exit(0); // zakoncz dzialanie demona
